@@ -90,7 +90,7 @@ best_acc1 = 0
 
 def main():
     args = parser.parse_args()
-    task = Task.init(project_name="PseudoLabel-project/imagenet1K/resnet50", task_name=args.task_name)
+    # task = Task.init(project_name="PseudoLabel-project/imagenet1K/resnet50", task_name=args.task_name)
     
     if args.csvFile and args.pseudo:
         global pseudo_policy
