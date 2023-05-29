@@ -418,10 +418,10 @@ def validate(val_loader, model, criterion, args):
 
 def save_checkpoint(state, is_best, args, filename='checkpoint_pseudo.pth.tar'):
     if args.pseudo and args.csvFile:
-        filename_path=os.path.join('./base-models',pseudo_policy,filename)
+        filename_path=os.path.join(pseudo_policy,filename)
         torch.save(state, filename_path)
         if is_best:
-            best_path = os.path.join('./base-models',pseudo_policy,'model_best_pseudo.pth.tar')
+            best_path = os.path.join(pseudo_policy,'model_best_pseudo.pth.tar')
             shutil.copyfile(filename_path,best_path)
     else:
         torch.save(state, filename_path)
