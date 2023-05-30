@@ -22,7 +22,6 @@ import torchvision.models as models
 from torch.utils.data import Subset
 from pseudo_label import PseudoLabelDataset
 
-from clearml import Task
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
