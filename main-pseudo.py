@@ -86,6 +86,8 @@ parser.add_argument('--task_name',
                     help='name of task on clearml')
 parser.add_argument('-n', '--num_classes', default=1000, type=int, metavar='N',
                     help='number of target class (default: 1000)')
+parser.add_argument('-g', '--num_gpus', default=1, type=int, metavar='N',
+                    help='number of GPUs (default: 1)')
 
 best_acc1 = 0
 
@@ -155,7 +157,7 @@ def main_worker(gpu, ngpus_per_node, args):
         print("=> creating model '{}'".format(args.arch))
         model = models.__dict__[args.arch]()
     if(args.num_classes != 1000):
-        model.fc = nn.Linear(512, args.num_classes)
+        model.fc = nn.Linear(512*args.num_gpus, args.num_classes)
     if not torch.cuda.is_available():
         print('using CPU, this will be slow')
     elif args.distributed:
