@@ -85,7 +85,8 @@ parser.add_argument('--csvFile', default=None,
                     help='name of csv file (without .csv extension) containing image path and pseudo label')
 parser.add_argument('--task_name',
                     help='name of task on clearml')
-
+parser.add_argument('-n', '--num_classes', default=1000, type=int, metavar='N',
+                    help='number of target class (default: 1000)')
 best_acc1 = 0
 
 def main():
@@ -153,7 +154,8 @@ def main_worker(gpu, ngpus_per_node, args):
     else:
         print("=> creating model '{}'".format(args.arch))
         model = models.__dict__[args.arch]()
-
+    if(args.num_classes != 1000):
+        model.fc = nn.Linear(2048, args.num_classes)
     if not torch.cuda.is_available():
         print('using CPU, this will be slow')
     elif args.distributed:
@@ -206,7 +208,7 @@ def main_worker(gpu, ngpus_per_node, args):
                 loc = 'cuda:{}'.format(args.gpu)
                 checkpoint = torch.load(args.resume, map_location=loc)
             args.start_epoch = checkpoint['epoch']
-            best_acc1 = checkpoint['best_acc1']
+            best_acc1 = torch.tensor(checkpoint['best_acc1'])
             if args.gpu is not None:
                 # best_acc1 may be from a checkpoint from a different GPU
                 best_acc1 = best_acc1.to(args.gpu)
@@ -226,7 +228,7 @@ def main_worker(gpu, ngpus_per_node, args):
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
     if args.pseudo:
-        train_dataset = PseudoLabelDataset(args.csvFile+'.csv',
+        train_dataset = PseudoLabelDataset(args.csvFile+'_50ksubset.csv',
                 args.data,
                 transforms.Compose([
                     transforms.RandomResizedCrop(224),
@@ -413,17 +415,10 @@ def validate(val_loader, model, criterion, args):
     return top1.avg
 
 
-def save_checkpoint(state, is_best, args, filename='checkpoint.pth.tar'):
-    if args.pseudo and args.csvFile:
-        filename_path=os.path.join('./base-models',pseudo_policy,filename)
-        torch.save(state, filename_path)
-        if is_best:
-            best_path = os.path.join('./base-models',pseudo_policy,'model_best.pth.tar')
-            shutil.copyfile(filename_path,best_path)
-    else:
-        torch.save(state, filename_path)
-        if is_best:
-            shutil.copyfile(filename,'model_best.pth.tar')
+def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
+    torch.save(state, filename)
+    if is_best:
+        shutil.copyfile(filename, 'model_best.pth.tar')
 
 class Summary(Enum):
     NONE = 0
@@ -453,7 +448,7 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
     def all_reduce(self):
-        total = torch.FloatTensor([self.sum, self.count])
+        total = torch.FloatTensor([self.sum, self.count]).cuda()
         dist.all_reduce(total, dist.ReduceOp.SUM, async_op=False)
         self.sum, self.count = total.tolist()
         self.avg = self.sum / self.count
