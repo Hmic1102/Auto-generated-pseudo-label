@@ -157,7 +157,7 @@ def main_worker(gpu, ngpus_per_node, args):
         print("=> creating model '{}'".format(args.arch))
         model = models.__dict__[args.arch]()
     if(args.num_classes != 1000):
-        model.fc = nn.Linear(512*args.num_gpus, args.num_classes)
+        model.fc = nn.Linear(2048*args.num_gpus, args.num_classes)
     if not torch.cuda.is_available():
         print('using CPU, this will be slow')
     elif args.distributed:
