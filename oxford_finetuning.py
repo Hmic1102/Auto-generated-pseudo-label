@@ -22,11 +22,7 @@ import torchvision.models as models
 from torch.utils.data import Subset
 from pseudo_label import PseudoLabelDataset
 
-from zipfile import ZipFile
-# Create a ZipFile Object and load sample.zip in it
-with ZipFile('./oxford-102-flower-pytorch/flower_data.zip', 'r') as zipObj:
-   # Extract all the contents of zip file in current directory
-   zipObj.extractall()
+
   
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
