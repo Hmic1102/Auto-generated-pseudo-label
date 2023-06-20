@@ -23,7 +23,6 @@ from torch.utils.data import Subset
 from pseudo_label import PseudoLabelDataset
 
 
-  
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
     and callable(models.__dict__[name]))
@@ -85,6 +84,10 @@ parser.add_argument('--csvFile', default=None,
                     help='name of csv file (without .csv extension) containing image path and pseudo label')
 parser.add_argument('--task_name',
                     help='name of task on clearml')
+parser.add_argument('-n', '--num_classes', default=1000, type=int, metavar='N',
+                    help='number of target class (default: 1000)')
+parser.add_argument('-g', '--num_gpus', default=1, type=int, metavar='N',
+                    help='number of GPUs (default: 1)')
 
 best_acc1 = 0
 
@@ -153,7 +156,8 @@ def main_worker(gpu, ngpus_per_node, args):
     else:
         print("=> creating model '{}'".format(args.arch))
         model = models.__dict__[args.arch]()
-
+    if(args.num_classes != 1000):
+        model.fc = nn.Linear(2048*args.num_gpus, args.num_classes)
     if not torch.cuda.is_available():
         print('using CPU, this will be slow')
     elif args.distributed:
@@ -208,7 +212,7 @@ def main_worker(gpu, ngpus_per_node, args):
                 loc = 'cuda:{}'.format(args.gpu)
                 checkpoint = torch.load(args.resume, map_location=loc)
             args.start_epoch = checkpoint['epoch']
-            best_acc1 = checkpoint['best_acc1']
+            best_acc1 = torch.tensor(checkpoint['best_acc1'])
             if args.gpu is not None:
                 # best_acc1 may be from a checkpoint from a different GPU
                 best_acc1 = best_acc1.to(args.gpu)
@@ -224,9 +228,8 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # Data loading code
     traindir = os.path.join(args.data, 'train')
-    valdir = os.path.join(args.data, 'valid')
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], 
-                                     std=[0.229, 0.224, 0.225])
+    valdir = os.path.join(args.data, 'val')
+    normalize = transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276])
     if args.pseudo:
         train_dataset = PseudoLabelDataset(args.csvFile+'.csv',
                 args.data,
@@ -448,7 +451,7 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
     def all_reduce(self):
-        total = torch.FloatTensor([self.sum, self.count])
+        total = torch.FloatTensor([self.sum, self.count]).cuda()
         dist.all_reduce(total, dist.ReduceOp.SUM, async_op=False)
         self.sum, self.count = total.tolist()
         self.avg = self.sum / self.count
