@@ -216,9 +216,11 @@ def main_worker(gpu, ngpus_per_node, args):
             if args.gpu is not None:
                 # best_acc1 may be from a checkpoint from a different GPU
                 best_acc1 = best_acc1.to(args.gpu)
-            model.load_state_dict(checkpoint['state_dict'])
-            optimizer.load_state_dict(checkpoint['optimizer'])
-            scheduler.load_state_dict(checkpoint['scheduler'])
+            model_dict = model.state_dict()
+            checkpoint = {k: v for k, v in checkpoint.items() if (k in model_dict and 'fc' not in k)}
+            model_dict.update(pretrained_dict)
+            model.load_state_dict(model_dict)
+            
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
         else:
