@@ -229,40 +229,19 @@ def main_worker(gpu, ngpus_per_node, args):
     traindir = os.path.join(args.data, 'train')
     valdir = os.path.join(args.data, 'val')
     normalize = transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276])
-    if args.pseudo:
-        train_dataset = PseudoLabelDataset(args.csvFile+'.csv',
-                args.data,
-                transforms.Compose([
-                    transforms.RandomResizedCrop(224),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor(),
-                    normalize,
-                    ]))
-        val_dataset = PseudoLabelDataset(args.csvFile+'_50ksubset.csv',
-                args.data,
-                transforms.Compose([
-                    transforms.RandomResizedCrop(224),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor(),
-                    normalize,
-                    ]))
-    else: 
-        train_dataset = datasets.ImageFolder(
-                traindir,
-                transforms.Compose([
+    train_dataset = FGVCAircraft(root = '/scratch/zh2033',  transform = transforms.Compose([
                     transforms.Resize(256),
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
-                    normalize,
-                    ]))
-        val_dataset = datasets.ImageFolder(
-                valdir,
-                transforms.Compose([
+                    transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276])
+                    ]),download = True)
+    val_dataset = FGVCAircraft(root = '/scratch/zh2033', split = 'test', transform = transforms.Compose([
                     transforms.Resize(256),
-                    transforms.CenterCrop(224),
+                    transforms.RandomResizedCrop(224),
+                    transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
-                    normalize,
+                    normalize
                     ]))
 
     if args.distributed:
