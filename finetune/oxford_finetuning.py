@@ -292,7 +292,8 @@ def main_worker(gpu, ngpus_per_node, args):
                 'state_dict': model.state_dict(),
                 'best_acc1': best_acc1,
                 'optimizer' : optimizer.state_dict(),
-                'scheduler' : scheduler.state_dict()
+                'scheduler' : scheduler.state_dict(),
+                'best_acc5' : best_acc5
             }, is_best,args)
 
 
