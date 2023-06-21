@@ -20,7 +20,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
 from torch.utils.data import Subset
-from pseudo_label import PseudoLabelDataset
+from torchvision.datasets import Flowers102
 
 
 model_names = sorted(name for name in models.__dict__
@@ -229,14 +229,14 @@ def main_worker(gpu, ngpus_per_node, args):
     traindir = os.path.join(args.data, 'train')
     valdir = os.path.join(args.data, 'val')
     normalize = transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276])
-    train_dataset = FGVCAircraft(root = '/scratch/zh2033',  transform = transforms.Compose([
+    train_dataset = Flowers102(root = '/scratch/zh2033',  transform = transforms.Compose([
                     transforms.Resize(256),
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
                     transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276])
                     ]),download = True)
-    val_dataset = FGVCAircraft(root = '/scratch/zh2033', split = 'test', transform = transforms.Compose([
+    val_dataset = Flowers102(root = '/scratch/zh2033', split = 'val', transform = transforms.Compose([
                     transforms.Resize(256),
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
