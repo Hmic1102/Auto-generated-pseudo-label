@@ -94,6 +94,7 @@ parser.add_argument('--dataset',default = None, type = str,
                     help = 'dataset used for transferlearning')
 
 best_acc1 = 0
+best_acc5 = 0
 
 def main():
     args = parser.parse_args()
@@ -275,7 +276,7 @@ def main_worker(gpu, ngpus_per_node, args):
         train(train_loader, model, criterion, optimizer, epoch, args)
         
         # evaluate on validation set
-        acc1 = validate(val_loader, model, criterion, args)
+        acc1,acc5 = validate(val_loader, model, criterion, args)
     
         scheduler.step()
 
@@ -283,6 +284,7 @@ def main_worker(gpu, ngpus_per_node, args):
         # remember best acc@1 and save checkpoint
         is_best = acc1 > best_acc1
         best_acc1 = max(acc1, best_acc1)
+        best_acc5 = max(acc5, best_acc5)
 
         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
                 and args.rank % ngpus_per_node == 0):
@@ -399,7 +401,7 @@ def validate(val_loader, model, criterion, args):
 
     progress.display_summary()
 
-    return top1.avg
+    return top1.avg,top5.avg
 
 
 def save_checkpoint(state, is_best, args, filename='checkpoint.pth.tar'):
