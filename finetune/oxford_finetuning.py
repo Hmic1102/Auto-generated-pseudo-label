@@ -235,7 +235,7 @@ def main_worker(gpu, ngpus_per_node, args):
     traindir = os.path.join(args.data, 'train')
     valdir = os.path.join(args.data, 'val')
     normalize = transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276])
-    train_dataset = Flowers102(root = '/scratch/zh2033',  transform = transforms.Compose([
+    train_dataset = Flowers102(root = '/scratch/zh2033', split = 'test', transform = transforms.Compose([
                     transforms.Resize(256),
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
