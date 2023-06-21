@@ -215,7 +215,7 @@ def main_worker(gpu, ngpus_per_node, args):
             best_acc1 = 0
             model_dict = model.state_dict()
             checkpoint = {k: v for k, v in checkpoint.items() if (k in model_dict and 'fc' not in k)}
-            model_dict.update(pretrained_dict)
+            model_dict.update(checkpoint)
             model.load_state_dict(model_dict)
             
             print("=> loaded checkpoint '{}')"
