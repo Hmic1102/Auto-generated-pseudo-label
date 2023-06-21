@@ -20,7 +20,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
 from torch.utils.data import Subset
-from pseudo_label import PseudoLabelDataset
+from torchvision.datasets import FGVCAircraft
 
 
 model_names = sorted(name for name in models.__dict__
