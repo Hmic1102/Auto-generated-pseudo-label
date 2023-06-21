@@ -88,6 +88,10 @@ parser.add_argument('-n', '--num_classes', default=1000, type=int, metavar='N',
                     help='number of target class (default: 1000)')
 parser.add_argument('-g', '--num_gpus', default=1, type=int, metavar='N',
                     help='number of GPUs (default: 1)')
+parser.add_argument('--policy',default = 'vanilla', type = str, 
+                    help = 'policy for pretained model')
+parser.add_argument('--dataset',default = None, type = str, 
+                    help = 'dataset used for transferlearning')
 
 best_acc1 = 0
 
@@ -398,9 +402,10 @@ def validate(val_loader, model, criterion, args):
 
 
 def save_checkpoint(state, is_best, args, filename='checkpoint.pth.tar'):
-    torch.save(state, 'oxford_finetuning.pth.tar')
+    policy = args.policy
+    torch.save(state, f'checkpoint_finetune_{policy}_lr{args.lr}_{args.dataset}.pth.tar')
     if is_best:
-      shutil.copyfile('oxford_finetuning.pth.tar','model_best_oxford.pth.tar')
+      shutil.copyfile(f'checkpoint_finetune_{policy}_lr{args.lr}_{args.dataset}.pth.tar',f'modelbest_finetune_{policy}_lr{args.lr}_{args.dataset}.pth.tar')
 
 class Summary(Enum):
     NONE = 0
