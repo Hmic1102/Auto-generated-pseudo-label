@@ -90,6 +90,7 @@ parser.add_argument('-g', '--num_gpus', default=1, type=int, metavar='N',
                     help='number of GPUs (default: 1)')
 
 best_acc1 = 0
+best_acc5 = 0
 
 def main():
     args = parser.parse_args()
@@ -135,6 +136,7 @@ def main():
 
 def main_worker(gpu, ngpus_per_node, args):
     global best_acc1
+    global best_acc5
     args.gpu = gpu
 
     if args.gpu is not None:
@@ -269,7 +271,7 @@ def main_worker(gpu, ngpus_per_node, args):
         train(train_loader, model, criterion, optimizer, epoch, args)
         
         # evaluate on validation set
-        acc1 = validate(val_loader, model, criterion, args)
+        acc1,acc5 = validate(val_loader, model, criterion, args)
     
         scheduler.step()
 
@@ -277,6 +279,7 @@ def main_worker(gpu, ngpus_per_node, args):
         # remember best acc@1 and save checkpoint
         is_best = acc1 > best_acc1
         best_acc1 = max(acc1, best_acc1)
+        best_acc5 = max(acc5, best_acc5)
 
         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
                 and args.rank % ngpus_per_node == 0):
@@ -286,7 +289,8 @@ def main_worker(gpu, ngpus_per_node, args):
                 'state_dict': model.state_dict(),
                 'best_acc1': best_acc1,
                 'optimizer' : optimizer.state_dict(),
-                'scheduler' : scheduler.state_dict()
+                'scheduler' : scheduler.state_dict(),
+                'best_acc5': best_acc5,
             }, is_best,args)
 
 
@@ -392,13 +396,15 @@ def validate(val_loader, model, criterion, args):
 
     progress.display_summary()
 
-    return top1.avg
+    return top1.avg,top5.avg
 
 
 def save_checkpoint(state, is_best, args, filename='checkpoint.pth.tar'):
-    torch.save(state, 'oxford_finetuning.pth.tar')
+    policy = args.policy
+    torch.save(state, f'checkpoint_finetune_{policy}_lr{args.lr}_{args.dataset}.pth.tar')
     if is_best:
-      shutil.copyfile('oxford_finetuning.pth.tar','model_best_oxford.pth.tar')
+      shutil.copyfile(f'checkpoint_finetune_{policy}_lr{args.lr}_{args.dataset}.pth.tar',f'modelbest_finetune_{policy}_lr{args.lr}_{args.dataset}.pth.tar')
+
 
 class Summary(Enum):
     NONE = 0
