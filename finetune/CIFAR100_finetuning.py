@@ -229,13 +229,13 @@ def main_worker(gpu, ngpus_per_node, args):
     traindir = os.path.join(args.data, 'train')
     valdir = os.path.join(args.data, 'val')
     normalize = transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276])
-    train_dataset = CIFAR100(root = '/scratch/zh2033/aircraft', split = 'train', transform = transforms.Compose([
+    train_dataset = CIFAR100(root = '/scratch/zh2033/CIFAR100', transform = transforms.Compose([
                     transforms.Resize(256),
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
                     ]),download = True)
-    val_dataset = CIFAR100(root = '/scratch/zh2033/aircraft', split = 'val', transform = transforms.Compose([
+    val_dataset = CIFAR100(root = '/scratch/zh2033/CIFAR100', train = False, transform = transforms.Compose([
                     transforms.Resize(256),
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
