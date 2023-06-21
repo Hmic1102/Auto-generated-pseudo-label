@@ -88,6 +88,10 @@ parser.add_argument('-n', '--num_classes', default=1000, type=int, metavar='N',
                     help='number of target class (default: 1000)')
 parser.add_argument('-g', '--num_gpus', default=1, type=int, metavar='N',
                     help='number of GPUs (default: 1)')
+parser.add_argument('--policy',default = 'vanilla', type = str, 
+                    help = 'policy for pretained model')
+parser.add_argument('--dataset',default = None, type = str, 
+                    help = 'dataset used for transferlearning')
 
 best_acc1 = 0
 best_acc5 = 0
