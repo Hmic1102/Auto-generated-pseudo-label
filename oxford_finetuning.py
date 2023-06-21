@@ -211,18 +211,15 @@ def main_worker(gpu, ngpus_per_node, args):
                 # Map model to be loaded to specified single gpu.
                 loc = 'cuda:{}'.format(args.gpu)
                 checkpoint = torch.load(args.resume, map_location=loc)
-            args.start_epoch = checkpoint['epoch']
-            best_acc1 = torch.tensor(checkpoint['best_acc1'])
-            if args.gpu is not None:
-                # best_acc1 may be from a checkpoint from a different GPU
-                best_acc1 = best_acc1.to(args.gpu)
+            args.start_epoch = 0
+            best_acc1 = 0
             model_dict = model.state_dict()
             checkpoint = {k: v for k, v in checkpoint.items() if (k in model_dict and 'fc' not in k)}
             model_dict.update(pretrained_dict)
             model.load_state_dict(model_dict)
             
-            print("=> loaded checkpoint '{}' (epoch {})"
-                  .format(args.resume, checkpoint['epoch']))
+            print("=> loaded checkpoint '{}')"
+                  .format(args.resume))
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 
@@ -253,6 +250,7 @@ def main_worker(gpu, ngpus_per_node, args):
         train_dataset = datasets.ImageFolder(
                 traindir,
                 transforms.Compose([
+                    transforms.Resize(256),
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
