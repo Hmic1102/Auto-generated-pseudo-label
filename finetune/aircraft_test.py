@@ -199,7 +199,7 @@ def main_worker(gpu, ngpus_per_node, args):
     criterion = nn.CrossEntropyLoss().cuda(args.gpu)
 
     my_list = ['fc.weight', 'fc.bias']
-    params = list(filter(lambda kv: kv[0] in my_list, model.moduel.named_parameters()))
+    params = list(filter(lambda kv: kv[0] in my_list, model.module.named_parameters()))
     base_params = list(filter(lambda kv: kv[0] not in my_list, model.module.named_parameters()))
     optimizer = torch.optim.SGD([
                             {'params': [temp[1] for temp in base_params]},
