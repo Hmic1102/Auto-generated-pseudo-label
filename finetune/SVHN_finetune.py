@@ -249,7 +249,7 @@ def main_worker(gpu, ngpus_per_node, args):
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
-                    ]))
+                    ]),download = True)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
