@@ -198,10 +198,13 @@ def main_worker(gpu, ngpus_per_node, args):
     # define loss function (criterion), optimizer, and learning rate scheduler
     criterion = nn.CrossEntropyLoss().cuda(args.gpu)
 
-    optimizer = torch.optim.SGD(
-                                [{'params': model.module.fc.parameters(), 'lr': args.lr*10}], 
-                                args.lr,
-                                momentum=args.momentum,
+    my_list = ['fc.weight', 'fc.bias']
+    params = list(filter(lambda kv: kv[0] in my_list, model.module.named_parameters()))
+    base_params = list(filter(lambda kv: kv[0] not in my_list, model.module.named_parameters()))
+    optimizer = torch.optim.SGD([
+                            {'params': [temp[1] for temp in base_params]},
+                            {'params': [param[1] for param in params],'lr': args.lr*10}],
+                              lr = args.lr, momentum=args.momentum,
                                 weight_decay=args.weight_decay)
     
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
