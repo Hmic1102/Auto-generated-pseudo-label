@@ -88,8 +88,13 @@ parser.add_argument('-n', '--num_classes', default=1000, type=int, metavar='N',
                     help='number of target class (default: 1000)')
 parser.add_argument('-g', '--num_gpus', default=1, type=int, metavar='N',
                     help='number of GPUs (default: 1)')
+parser.add_argument('--policy',default = 'vanilla', type = str, 
+                    help = 'policy for pretained model')
+parser.add_argument('--dataset',default = None, type = str, 
+                    help = 'dataset used for transferlearning')
 
 best_acc1 = 0
+best_acc5 = 0
 
 def main():
     args = parser.parse_args()
@@ -135,6 +140,7 @@ def main():
 
 def main_worker(gpu, ngpus_per_node, args):
     global best_acc1
+    global best_acc5
     args.gpu = gpu
 
     if args.gpu is not None:
@@ -192,10 +198,13 @@ def main_worker(gpu, ngpus_per_node, args):
     # define loss function (criterion), optimizer, and learning rate scheduler
     criterion = nn.CrossEntropyLoss().cuda(args.gpu)
 
-    optimizer = torch.optim.SGD(
-                                [{'params': model.module.fc.parameters(), 'lr': args.lr*10}], 
-                                args.lr,
-                                momentum=args.momentum,
+    my_list = ['fc.weight', 'fc.bias']
+    params = list(filter(lambda kv: kv[0] in my_list, model.module.named_parameters()))
+    base_params = list(filter(lambda kv: kv[0] not in my_list, model.module.named_parameters()))
+    optimizer = torch.optim.SGD([
+                            {'params': [temp[1] for temp in base_params]},
+                            {'params': [param[1] for param in params],'lr': args.lr*10}],
+                              lr = args.lr, momentum=args.momentum,
                                 weight_decay=args.weight_decay)
     
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
@@ -215,7 +224,7 @@ def main_worker(gpu, ngpus_per_node, args):
             best_acc1 = 0
             model_dict = model.state_dict()
             checkpoint = {k: v for k, v in checkpoint.items() if (k in model_dict and 'fc' not in k)}
-            model_dict.update(pretrained_dict)
+            model_dict.update(checkpoint)
             model.load_state_dict(model_dict)
             
             print("=> loaded checkpoint '{}')"
@@ -229,13 +238,13 @@ def main_worker(gpu, ngpus_per_node, args):
     traindir = os.path.join(args.data, 'train')
     valdir = os.path.join(args.data, 'val')
     normalize = transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276])
-    train_dataset = Omniglot(root = '/scratch/zh2033/CIFAR100', transform = transforms.Compose([
+    train_dataset = Omniglot(root = '/scratch/zh2033/SVNH',  transform = transforms.Compose([
                     transforms.Resize(256),
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
                     ]),download = True)
-    val_dataset = Omniglot(root = '/scratch/zh2033/CIFAR100', background = False, transform = transforms.Compose([
+    val_dataset = Omniglot(root = '/scratch/zh2033/SVNH', background = False, transform = transforms.Compose([
                     transforms.Resize(256),
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
@@ -269,7 +278,7 @@ def main_worker(gpu, ngpus_per_node, args):
         train(train_loader, model, criterion, optimizer, epoch, args)
         
         # evaluate on validation set
-        acc1 = validate(val_loader, model, criterion, args)
+        acc1,acc5 = validate(val_loader, model, criterion, args)
     
         scheduler.step()
 
@@ -277,6 +286,7 @@ def main_worker(gpu, ngpus_per_node, args):
         # remember best acc@1 and save checkpoint
         is_best = acc1 > best_acc1
         best_acc1 = max(acc1, best_acc1)
+        best_acc5 = max(acc5, best_acc5)
 
         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
                 and args.rank % ngpus_per_node == 0):
@@ -286,7 +296,8 @@ def main_worker(gpu, ngpus_per_node, args):
                 'state_dict': model.state_dict(),
                 'best_acc1': best_acc1,
                 'optimizer' : optimizer.state_dict(),
-                'scheduler' : scheduler.state_dict()
+                'scheduler' : scheduler.state_dict(),
+                'best_acc5': best_acc5,
             }, is_best,args)
 
 
@@ -392,13 +403,15 @@ def validate(val_loader, model, criterion, args):
 
     progress.display_summary()
 
-    return top1.avg
+    return top1.avg,top5.avg
 
 
 def save_checkpoint(state, is_best, args, filename='checkpoint.pth.tar'):
-    torch.save(state, 'oxford_finetuning.pth.tar')
+    policy = args.policy
+    torch.save(state, f'checkpoint_finetune_{policy}_lr{args.lr}_{args.dataset}.pth.tar')
     if is_best:
-      shutil.copyfile('oxford_finetuning.pth.tar','model_best_oxford.pth.tar')
+      shutil.copyfile(f'checkpoint_finetune_{policy}_lr{args.lr}_{args.dataset}.pth.tar',f'modelbest_finetune_{policy}_lr{args.lr}_{args.dataset}.pth.tar')
+
 
 class Summary(Enum):
     NONE = 0
