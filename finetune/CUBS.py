@@ -244,7 +244,7 @@ def main_worker(gpu, ngpus_per_node, args):
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
                     ]),download = True)
-    val_dataset = Cub2011(root = '/scratch/zh2033/Cub2011', train = True , transform = transforms.Compose([
+    val_dataset = Cub2011(root = '/scratch/zh2033/Cub2011', train = False , transform = transforms.Compose([
                     transforms.Resize(256),
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
