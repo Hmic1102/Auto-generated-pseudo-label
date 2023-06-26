@@ -243,13 +243,13 @@ def main_worker(gpu, ngpus_per_node, args):
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
-                    ]),download = True)
+                    ]))
     val_dataset = Omniglot(root = '/scratch/zh2033/omniglot', background = False, transform = transforms.Compose([
                     transforms.Resize(256),
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
-                    ]),download = True)
+                    ]))
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
