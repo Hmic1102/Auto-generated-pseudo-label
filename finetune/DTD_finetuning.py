@@ -284,7 +284,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
         
         # remember best acc@1 and save checkpoint
-        is_best = acc1 > best_acc1
+        is_best = acc5 > best_acc5
         best_acc1 = max(acc1, best_acc1)
         best_acc5 = max(acc5, best_acc5)
 
