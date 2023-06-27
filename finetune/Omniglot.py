@@ -164,6 +164,7 @@ def main_worker(gpu, ngpus_per_node, args):
         model = models.__dict__[args.arch](num_classes = args.num_classes)
     if(args.num_classes != 1000):
         model.fc = nn.Linear(2048, args.num_classes)
+    model.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     if not torch.cuda.is_available():
         print('using CPU, this will be slow')
     elif args.distributed:
@@ -274,11 +275,7 @@ def main_worker(gpu, ngpus_per_node, args):
         if args.distributed:
             train_sampler.set_epoch(epoch)
             
-        model.module.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        model.cuda(args.gpu)
-        args.batch_size = int(args.batch_size / ngpus_per_node)
-        args.workers = int((args.workers + ngpus_per_node - 1) / ngpus_per_node)
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters = True)
+    
 
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch, args)
