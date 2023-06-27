@@ -275,6 +275,7 @@ def main_worker(gpu, ngpus_per_node, args):
             train_sampler.set_epoch(epoch)
             
         model.module.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        model.cuda()
 
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch, args)
