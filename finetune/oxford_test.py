@@ -164,6 +164,41 @@ def main_worker(gpu, ngpus_per_node, args):
     else:
         print("=> creating model '{}'".format(args.arch))
         model = models.__dict__[args.arch](num_classes = args.previous_class)
+    
+    # define loss function (criterion), optimizer, and learning rate scheduler
+    criterion = nn.CrossEntropyLoss().cuda(args.gpu)
+
+    my_list = ['fc.weight', 'fc.bias']
+    params = list(filter(lambda kv: kv[0] in my_list, model.module.named_parameters()))
+    base_params = list(filter(lambda kv: kv[0] not in my_list, model.module.named_parameters()))
+    optimizer = torch.optim.SGD([
+                            {'params': [temp[1] for temp in base_params]},
+                            {'params': [param[1] for param in params],'lr': args.lr*10}],
+                              lr = args.lr, momentum=args.momentum,
+                                weight_decay=args.weight_decay)
+    
+    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
+    scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
+    
+    # optionally resume from a checkpoint
+    if args.resume:
+        if os.path.isfile(args.resume):
+            print("=> loading checkpoint '{}'".format(args.resume))
+            if args.gpu is None:
+                checkpoint = torch.load(args.resume)
+            else:
+                # Map model to be loaded to specified single gpu.
+                loc = 'cuda:{}'.format(args.gpu)
+                checkpoint = torch.load(args.resume, map_location=loc)
+            args.start_epoch = 0
+            best_acc1 = 0
+            model.load_state_dict(checkpoint['state_dict'])
+            print("=> loaded checkpoint '{}' "
+                  .format(args.resume))
+            model.fc = nn.Linear(model.fc.in_features,args.num_classes)
+            
+        else:
+            print("=> no checkpoint found at '{}'".format(args.resume))
     if not torch.cuda.is_available():
         print('using CPU, this will be slow')
     elif args.distributed:
@@ -195,41 +230,6 @@ def main_worker(gpu, ngpus_per_node, args):
         else:
             model = torch.nn.DataParallel(model).cuda()
 
-    # define loss function (criterion), optimizer, and learning rate scheduler
-    criterion = nn.CrossEntropyLoss().cuda(args.gpu)
-
-    my_list = ['fc.weight', 'fc.bias']
-    params = list(filter(lambda kv: kv[0] in my_list, model.module.named_parameters()))
-    base_params = list(filter(lambda kv: kv[0] not in my_list, model.module.named_parameters()))
-    optimizer = torch.optim.SGD([
-                            {'params': [temp[1] for temp in base_params]},
-                            {'params': [param[1] for param in params],'lr': args.lr*10}],
-                              lr = args.lr, momentum=args.momentum,
-                                weight_decay=args.weight_decay)
-    
-    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-    scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
-    
-    # optionally resume from a checkpoint
-    if args.resume:
-        if os.path.isfile(args.resume):
-            print("=> loading checkpoint '{}'".format(args.resume))
-            if args.gpu is None:
-                checkpoint = torch.load(args.resume)
-            else:
-                # Map model to be loaded to specified single gpu.
-                loc = 'cuda:{}'.format(args.gpu)
-                checkpoint = torch.load(args.resume, map_location=loc)
-            args.start_epoch = 0
-            best_acc1 = 0
-            model.load_state_dict(checkpoint['state_dict'])
-            print("=> loaded checkpoint '{}' "
-                  .format(args.resume))
-            model.module.fc = nn.Linear(model.module.fc.in_features,args.num_classes)
-            model = torch.nn.DataParallel(model).cuda()
-            
-        else:
-            print("=> no checkpoint found at '{}'".format(args.resume))
 
     cudnn.benchmark = True
 
