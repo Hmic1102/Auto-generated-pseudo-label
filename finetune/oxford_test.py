@@ -222,12 +222,9 @@ def main_worker(gpu, ngpus_per_node, args):
                 checkpoint = torch.load(args.resume, map_location=loc)
             args.start_epoch = 0
             best_acc1 = 0
-            if args.gpu is not None:
-               
-                
             model.load_state_dict(checkpoint['state_dict'])
-            print("=> loaded checkpoint '{}' (epoch {})"
-                  .format(args.resume, checkpoint['epoch']))
+            print("=> loaded checkpoint '{}' "
+                  .format(args.resume))
             model.module.fc = nn.linear(model.fc.in_features,args.num_classes)
             
         else:
