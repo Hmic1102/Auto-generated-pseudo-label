@@ -223,7 +223,7 @@ def main_worker(gpu, ngpus_per_node, args):
             args.start_epoch = 0
             best_acc1 = 0
             state_dict = checkpoint['state_dict']
-            print(state_dict['fc.bias'].shape)
+            print(state_dict['module.fc.bias'].shape)
             print(model.state_dict()['module.fc.bias'].shape)
             state_dict['fc.bias'] = model.state_dict()['module.fc.bias']
             state_dict['fc.weight'] = model.state_dict()['module.fc.weight']
