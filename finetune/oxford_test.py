@@ -226,6 +226,7 @@ def main_worker(gpu, ngpus_per_node, args):
             print("=> loaded checkpoint '{}' "
                   .format(args.resume))
             model.module.fc = nn.Linear(model.module.fc.in_features,args.num_classes)
+            model = torch.nn.DataParallel(model).cuda()
             
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
