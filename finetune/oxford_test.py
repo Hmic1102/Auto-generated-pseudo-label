@@ -226,7 +226,14 @@ def main_worker(gpu, ngpus_per_node, args):
             print("=> loaded checkpoint '{}' "
                   .format(args.resume))
             model.module.fc = nn.Linear(model.module.fc.in_features,args.num_classes)
-            model = torch.nn.DataParallel(model).cuda()
+            torch.cuda.set_device(args.gpu)
+            model.cuda(args.gpu)
+            # When using a single GPU per process and per
+            # DistributedDataParallel, we need to divide the batch size
+            # ourselves based on the total number of GPUs of the current node.
+            args.batch_size = int(args.batch_size / ngpus_per_node)
+            args.workers = int((args.workers + ngpus_per_node - 1) / ngpus_per_node)
+            model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
             
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
