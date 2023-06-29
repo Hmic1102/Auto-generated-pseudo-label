@@ -225,7 +225,7 @@ def main_worker(gpu, ngpus_per_node, args):
             model.load_state_dict(checkpoint['state_dict'])
             print("=> loaded checkpoint '{}' "
                   .format(args.resume))
-            model.module.fc = nn.linear(model.fc.in_features,args.num_classes)
+            model.module.fc = nn.Linear(model.fc.in_features,args.num_classes)
             
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
