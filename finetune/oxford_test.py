@@ -163,7 +163,7 @@ def main_worker(gpu, ngpus_per_node, args):
         model = models.__dict__[args.arch](pretrained=True)
     else:
         print("=> creating model '{}'".format(args.arch))
-        model = models.__dict__[args.arch](num_classes = args.previous_class)
+        model = models.__dict__[args.arch](num_classes = args.num_classes)
     if not torch.cuda.is_available():
         print('using CPU, this will be slow')
     elif args.distributed:
@@ -222,18 +222,11 @@ def main_worker(gpu, ngpus_per_node, args):
                 checkpoint = torch.load(args.resume, map_location=loc)
             args.start_epoch = 0
             best_acc1 = 0
-            model.load_state_dict(checkpoint['state_dict'])
-            print("=> loaded checkpoint '{}' "
-                  .format(args.resume))
-            model.module.fc = nn.Linear(model.module.fc.in_features,args.num_classes)
-            torch.cuda.set_device(args.gpu)
-            model.cuda(args.gpu)
-            # When using a single GPU per process and per
-            # DistributedDataParallel, we need to divide the batch size
-            # ourselves based on the total number of GPUs of the current node.
-            args.batch_size = int(args.batch_size / ngpus_per_node)
-            args.workers = int((args.workers + ngpus_per_node - 1) / ngpus_per_node)
-            model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
+            state_dict = checkpoint['state_dict']
+            state_dict['fc.bias'] = model.state_dict()['fc.bias']
+            state_dict['fc.weight'] = model.state_dict()['fc.weight']
+            model.load_state_dict(state_dict)
+            print("=> loaded checkpoint '{}' ".format(args.resume))
             
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
