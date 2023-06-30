@@ -162,8 +162,6 @@ def main_worker(gpu, ngpus_per_node, args):
     else:
         print("=> creating model '{}'".format(args.arch))
         model = models.__dict__[args.arch](num_classes = args.num_classes)
-    if(args.num_classes != 1000):
-        model.fc = nn.Linear(2048, args.num_classes)
     model.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     if not torch.cuda.is_available():
         print('using CPU, this will be slow')
@@ -223,10 +221,10 @@ def main_worker(gpu, ngpus_per_node, args):
                 checkpoint = torch.load(args.resume, map_location=loc)
             args.start_epoch = 0
             best_acc1 = 0
-            model_dict = model.state_dict()
-            checkpoint = {k: v for k, v in checkpoint.items() if (k in model_dict and 'fc' not in k)}
-            model_dict.update(checkpoint)
-            model.load_state_dict(model_dict)
+            state_dict = checkpoint['state_dict']
+            state_dict['module.fc.bias'] = model.state_dict()['module.fc.bias']
+            state_dict['module.fc.weight'] = model.state_dict()['module.fc.weight']
+            model.load_state_dict(state_dict)
             
             print("=> loaded checkpoint '{}')"
                   .format(args.resume))
@@ -287,7 +285,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
         
         # remember best acc@5 and save checkpoint
-        is_best = acc5 > best_acc5
+        is_best = acc1 > best_acc1
         best_acc1 = max(acc1, best_acc1)
         best_acc5 = max(acc5, best_acc5)
 
