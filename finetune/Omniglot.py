@@ -224,6 +224,7 @@ def main_worker(gpu, ngpus_per_node, args):
             state_dict = checkpoint['state_dict']
             state_dict['module.fc.bias'] = model.state_dict()['module.fc.bias']
             state_dict['module.fc.weight'] = model.state_dict()['module.fc.weight']
+            state_dict['module.conv1.weight'] = model.state_dict()['module.conv1.weight']
             model.load_state_dict(state_dict)
             
             print("=> loaded checkpoint '{}')"
