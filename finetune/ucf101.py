@@ -239,21 +239,19 @@ def main_worker(gpu, ngpus_per_node, args):
     traindir = os.path.join(args.data, 'train')
     valdir = os.path.join(args.data, 'val')
     normalize = transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276])
-    train_dataset = UCF101(root = '/scratch/zh2033/ucf101/UCF-101', split = 'test', transform = transforms.Compose([
+    train_dataset = UCF101(root = '/scratch/zh2033/ucf101/UCF-101', annotation_path = '/scratch/zh2033/ucf101/ucfTrainTestlist',frames_per_clip = 5, transform = transforms.Compose([
                     transforms.Resize(256),
                     transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
-                    transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276])
-                    ]),download = True)
-    val_dataset = UCF101(root = '/scratch/zh2033/ucf101/UCF-101', split = 'val', transform = transforms.Compose([
-                    transforms.Resize(256),
-                    transforms.RandomResizedCrop(224),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor(),
-                    normalize
                     ]))
-
+    val_dataset = UCF101(root = '/scratch/zh2033/ucf101/UCF-101', annotation_path = '/scratch/zh2033/ucf101/ucfTrainTestlist',frames_per_clip = 5, train = False, transform = transforms.Compose([
+                    transforms.Resize(256),
+                    transforms.RandomResizedCrop(224),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    ]))
+    
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
         val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False, drop_last=True)
