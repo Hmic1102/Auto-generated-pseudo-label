@@ -238,19 +238,27 @@ def main_worker(gpu, ngpus_per_node, args):
     # Data loading code
     traindir = os.path.join(args.data, 'train')
     valdir = os.path.join(args.data, 'val')
-    normalize = transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276])
-    train_dataset = UCF101(root = '/scratch/zh2033/ucf101/UCF-101', annotation_path = '/scratch/zh2033/ucf101/ucfTrainTestlist',frames_per_clip = 5, transform = transforms.Compose([
-                    transforms.Resize(256),
-                    transforms.RandomResizedCrop(224),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor(),
-                    ]))
-    val_dataset = UCF101(root = '/scratch/zh2033/ucf101/UCF-101', annotation_path = '/scratch/zh2033/ucf101/ucfTrainTestlist',frames_per_clip = 5, train = False, transform = transforms.Compose([
-                    transforms.Resize(256),
-                    transforms.RandomResizedCrop(224),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor(),
-                    ]))
+
+    tfs = transforms.Compose([
+            # TODO: this should be done by a video-level transfrom when PyTorch provides transforms.ToTensor() for video
+            # scale in [0, 1] of type float
+            transforms.Lambda(lambda x: x / 255.),
+            # reshape into (T, C, H, W) for easier convolutions
+            transforms.Lambda(lambda x: x.permute(0, 3, 1, 2)),
+            # rescale to the most common size
+            transforms.Lambda(lambda x: nn.functional.interpolate(x, (240, 320))),
+                            ])
+
+    train_dataset = UCF101(root = '/scratch/zh2033/ucf101/UCF-101', annotation_path = '/scratch/zh2033/ucf101/ucfTrainTestlist',
+                           frames_per_clip = 5, transform = tfs)
+    val_dataset = UCF101(root = '/scratch/zh2033/ucf101/UCF-101', annotation_path = '/scratch/zh2033/ucf101/ucfTrainTestlist',
+                         frames_per_clip = 5, train = False, transform = tfs)
+
+    def custom_collate(batch):
+        filtered_batch = []
+        for video, _, label in batch:
+            filtered_batch.append((video, label))
+        return torch.utils.data.dataloader.default_collate(filtered_batch)
     
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
@@ -261,11 +269,11 @@ def main_worker(gpu, ngpus_per_node, args):
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
-        num_workers=args.workers, pin_memory=True, sampler=train_sampler)
+        num_workers=args.workers, pin_memory=True, sampler=train_sampler, collate_fn=custom_collate)
 
     val_loader = torch.utils.data.DataLoader(
         val_dataset, batch_size=args.batch_size, shuffle=False,
-        num_workers=args.workers, pin_memory=True, sampler=val_sampler)
+        num_workers=args.workers, pin_memory=True, sampler=val_sampler, collate_fn=custom_collate)
 
     if args.evaluate:
         validate(val_loader, model, criterion, args)
