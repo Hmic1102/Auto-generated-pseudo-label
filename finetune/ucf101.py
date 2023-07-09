@@ -158,14 +158,18 @@ class_list, train, test = getUCF101(base_directory = data_directory)
 model =  torchvision.models.resnet50(pretrained=True)
 model.fc = nn.Linear(2048,NUM_CLASSES)
 if args.resume:
-    loc = 'cuda:{}'.format(args.gpu)
-    checkpoint = torch.load(args.resume)
-    state_dict = checkpoint['state_dict']
-    state_dict['fc.bias'] = model.state_dict()['fc.bias']
-    state_dict['fc.weight'] = model.state_dict()['fc.weight']
-    model.load_state_dict(state_dict)
+  loc = 'cuda:{}'.format(args.gpu)
+  checkpoint = torch.load(args.resume)
+  state_dict = checkpoint['state_dict']
+  for k, v in state_dict.items():
+    name = k[7:] # remove `module.`
+    state_dict[name] = v
+# load params
+  state_dict['fc.bias'] = model.state_dict()['fc.bias']
+  state_dict['fc.weight'] = model.state_dict()['fc.weight']
+  model.load_state_dict(state_dict)
     
-    print("=> loaded checkpoint '{}')"
+  print("=> loaded checkpoint '{}')"
           .format(args.resume)) 
 
 
