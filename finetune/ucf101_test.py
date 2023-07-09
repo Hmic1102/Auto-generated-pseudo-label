@@ -70,9 +70,7 @@ def loadFrame(args):
     data = np.zeros((3,height,width),dtype=np.float32)
 
     try:
-        ### load file from HDF5
-        filename = filename.replace('.avi','.hdf5')
-        filename = filename.replace('UCF-101','UCF-101-hdf5')
+        ### load file from HDF5=
         h = h5py.File(filename,'r')
         nFrames = len(h['video']) - 1
         frame_index = np.random.randint(nFrames)
