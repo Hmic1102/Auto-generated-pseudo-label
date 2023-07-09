@@ -158,8 +158,18 @@ model.fc = nn.Linear(2048,NUM_CLASSES)
 
 model.cuda()
 
-optimizer = optim.Adam(params,lr=lr)
+my_list = ['fc.weight', 'fc.bias']
+params = list(filter(lambda kv: kv[0] in my_list, model.named_parameters()))
+base_params = list(filter(lambda kv: kv[0] not in my_list, model.named_parameters()))
+
+optimizer = torch.optim.SGD([
+                            {'params': [temp[1] for temp in base_params]},
+                            {'params': [param[1] for param in params],'lr': args.lr*10}],
+                              lr = args.lr, momentum=0.9,
+                                weight_decay=1e-4)
+
 criterion = nn.CrossEntropyLoss()
+
 
 pool_threads = Pool(8,maxtasksperchild=200)
 
