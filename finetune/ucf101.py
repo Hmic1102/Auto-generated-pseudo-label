@@ -161,13 +161,15 @@ if args.resume:
   loc = 'cuda:{}'.format(args.gpu)
   checkpoint = torch.load(args.resume)
   state_dict = checkpoint['state_dict']
+  from collections import OrderedDict
+  new_state_dict = OrderedDict()
   for k, v in state_dict.items():
     name = k[7:] # remove `module.`
-    state_dict[name] = v
+    new_state_dict[name] = v
 # load params
-  state_dict['fc.bias'] = model.state_dict()['fc.bias']
-  state_dict['fc.weight'] = model.state_dict()['fc.weight']
-  model.load_state_dict(state_dict)
+  new_state_dict['fc.bias'] = model.state_dict()['fc.bias']
+  new_state_dict['fc.weight'] = model.state_dict()['fc.weight']
+  model.load_state_dict(new_state_dict)
     
   print("=> loaded checkpoint '{}')"
           .format(args.resume)) 
