@@ -22,7 +22,7 @@ parser.add_argument('--dataset',default = None, type = str,
 
 parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
-
+args = parser.parse_args()
 def getUCF101(base_directory = ''):
 
     # action class labels
