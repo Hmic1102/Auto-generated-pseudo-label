@@ -71,10 +71,12 @@ def loadFrame(args):
 
     try:
         ### load file from HDF5=
-        h = h5py.File(filename,'r')
-        nFrames = len(h['video']) - 1
-        frame_index = np.random.randint(nFrames)
-        frame = h['video'][frame_index]
+        video = cv2.VideoCapture(filename)
+        nFrames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        frame_index = np.random.randint(nFrames-1)
+        video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+        ret, frame = video.read()
+        video.release()
 
         if(augment==True):
             ## RANDOM CROP - crop 70-100% of original size
