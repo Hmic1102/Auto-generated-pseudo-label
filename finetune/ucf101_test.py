@@ -4,6 +4,25 @@ import cv2
 import time
 import h5py
 
+
+
+parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
+
+parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
+                    metavar='LR', help='initial learning rate', dest='lr')
+
+parser.add_argument('--resume', default='', type=str, metavar='PATH',
+                    help='path to latest checkpoint (default: none)')
+
+parser.add_argument('--policy',default = 'vanilla', type = str, 
+                    help = 'policy for pretained model')
+
+parser.add_argument('--dataset',default = None, type = str, 
+                    help = 'dataset used for transferlearning')
+
+parser.add_argument('--epochs', default=90, type=int, metavar='N',
+                    help='number of total epochs to run')
+
 def getUCF101(base_directory = ''):
 
     # action class labels
