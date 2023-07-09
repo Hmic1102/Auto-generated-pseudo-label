@@ -217,14 +217,7 @@ for epoch in range(0,num_of_epochs):
     accuracy_epoch = np.mean(train_accu)
     print(epoch, accuracy_epoch,time.time()-start_time)
 
-torch.save(model,'single_frame.model')
-pool_threads.close()
-pool_threads.terminate()
 
-
-
-
-##### TEST
 model.eval()
 test_accu = []
 random_indices = np.random.permutation(len(test[0]))
@@ -255,4 +248,14 @@ for i in range(0,len(test[0])-batch_size,batch_size):
     test_accu.append(accuracy)
     accuracy_test = np.mean(test_accu)
 print('Testing',accuracy_test,time.time()-t1)
+
+
+torch.save(model,'single_frame.model')
+pool_threads.close()
+pool_threads.terminate()
+
+
+
+
+##### TEST
 
