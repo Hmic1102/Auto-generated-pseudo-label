@@ -148,7 +148,7 @@ lr = args.lr
 num_of_epochs = args.epochs
 
 
-data_directory = '/scratch/zh2033/ucf101'
+data_directory = '/scratch/zh2033/ucf101/'
 class_list, train, test = getUCF101(base_directory = data_directory)
 
 
