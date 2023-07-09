@@ -159,7 +159,7 @@ model =  torchvision.models.resnet50(pretrained=True)
 model.fc = nn.Linear(2048,NUM_CLASSES)
 if args.resume:
     loc = 'cuda:{}'.format(args.gpu)
-    checkpoint = torch.load(args.resume, map_location=loc)
+    checkpoint = torch.load(args.resume)
     state_dict = checkpoint['state_dict']
     state_dict['fc.bias'] = model.state_dict()['fc.bias']
     state_dict['fc.weight'] = model.state_dict()['fc.weight']
